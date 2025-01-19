@@ -3,12 +3,11 @@ const Redis = require('ioredis')
 
 const options = {
     host: process.env.REDIS_ENDPOINT_URL,
-    // username: process.env.REDIS_USERNAME,
+     username: process.env.REDIS_USERNAME,
     password: process.env.REDIS_PASSWORD,
     port: Number(process.env.REDIS_PORT),
 }
 
-console.log(options)
 
 const client = new Redis(options)
 
