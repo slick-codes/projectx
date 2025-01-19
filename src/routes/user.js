@@ -13,7 +13,9 @@ router.post("/login", controllers.login)
 // auth endpoints 
 router.get("/",...all, controllers.getUser)
 router.post("/generate/token",  controllers.generateAccessToken)
-router.post("/create", ...all, controllers.createAccount)
+router.post("/create/group", ...all, controllers.createGroup)
+router.get("/roles", ...all, controllers.getRoles)
+router.get("/groups", ...all, controllers.getGroups)
 
 
 
