@@ -38,8 +38,8 @@ const User = sequelize.define('User', adminSchema, {
 })
 
 User.sync({ alter: true })
-    .then((_) => console.log('Admin Synced Successfully'))
-    .catch((_) => console.log('Admin Synced Failure'))
+    .then((_) => process.env.NODE_ENV === "production" && console.log("User synced successfully!"))
+    .catch((_) => process.env.NODE_ENV === "production" && console.log("User synced failed"))
 
 User.prototype.encrypt = async function (key) {
     this[key] = await bcrypt.hash(this[key], Number(process.env.PASSWORD_HASH))
