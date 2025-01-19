@@ -23,8 +23,8 @@ const Group = sequelize.define('Group', groupSchema, {
 })
 
 Group.sync({ alter: true })
-    .then((_) => console.log('Group synced successfully!'))
-    .catch((_) => console.log('Group sync failed'))
+    .then((_) => process.env.NODE_ENV === "production" && console.log("Group synced successfully!"))
+    .catch((_) => process.env.NODE_ENV === "production" && console.log("Group synced failed"))
 
 // setup grouping
 Group.belongsToMany(Role, { through: 'GroupRole' })
