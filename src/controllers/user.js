@@ -149,6 +149,11 @@ module.exports.createAccount = async function(req, res, next){
          return next(CustomError.unauthorizedRequest("Email already used"))
       }
 
+      const group = await Group.findByPk(req.body.group)
+      if(!group){
+         return next(CustomError.badRequest("Group does not exist"))
+      }
+
         // sending email to user
         let reference = null
       // generate uuid
@@ -164,6 +169,7 @@ module.exports.createAccount = async function(req, res, next){
       // send email 
       email.accountVerification({
          ...req.body,
+         url: url,
          expiration: "30 minutes"
       })
 
