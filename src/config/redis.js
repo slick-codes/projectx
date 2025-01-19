@@ -9,12 +9,12 @@ const options = {
 }
 
 
-const client = new Redis(options)
+const redis = new Redis(options)
 
-client.on('connect', function () {
+redis.on('connect', function () {
     console.log('-------------------------------------')
     console.log('Redis Server Conneced On Port:', process.env.REDIS_PORT)
     console.log('-------------------------------------')
 })
 
-module.exports = { client }
+module.exports = redis
