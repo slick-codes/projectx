@@ -4,9 +4,7 @@ const User = require("../models/User")
 const Group = require("../models/Group")
 const { OK } = require("http-status-codes")
 const Token = require("../models/Token")
-const { randomUUID } = require("crypto")
-const redis = require("../config/redis")
-const email = require("./../config/email")
+const Role = require("../models/Role")
 
 
 
@@ -130,60 +128,83 @@ module.exports.generateAccessToken = async function(req, res, next){
 }
 
 
-module.exports.createAccount = async function(req, res, next){
-   try{
-      const schema = new Schema({
-         fullName: { type: "string", required: true},
-         email: { type: "email", required: true},
-         group: { type: "number", required: true}
-      })
+module.exports.createGroup = async function (req, res, next) {
+    try {
+        const schema = new Schema({
+            name: { type: 'string', required: true },
+            description: { type: 'string', required: true },
+            roles: { type: 'array', required: true },
+        })
 
-      const r = schema.validate(req.body)
-      if(r.error){
-         return next(CustomError.badRequest("Invalid Request Body"))
-      }
-
-      // check if user already exist
-      const user = await User.findOne({where: { email: req.body.email}})
-      if(user){
-         return next(CustomError.unauthorizedRequest("Email already used"))
-      }
-
-      const group = await Group.findByPk(req.body.group)
-      if(!group){
-         return next(CustomError.badRequest("Group does not exist"))
-      }
-
-        // sending email to user
-        let reference = null
-      // generate uuid
-        while (!reference && await redis.get(reference)) {
-            reference = randomUUID()
+        const result = schema.validate(req.body)
+        if (result.error) {
+            return next(CustomError.badRequest('Invalid request body', result.error))
         }
 
-      const url = `${process.env.BASE_URL}/users/complete/${reference}`
-      // save email to redis
-      await redis.set(reference, { ...req.body })
-      await redis.expire(reference, 60 * 30) // set url to expire in 30min
+        const body = result.data
+        console.log(body)
 
-      // send email 
-      email.accountVerification({
-         ...req.body,
-         url: url,
-         expiration: "30 minutes"
-      })
+        if (await Group.findOne({ where: { name: body.name } })) {
+            return next(CustomError.badRequest('Group with that id already exist!'))
+        }
+
+        const group = await Group.create({
+            description: body.description,
+            name: body.name,
+        })
+
+        if (body.roles.length > 0) {
+            await group.addRoles(body.roles)
+        }
+
+        res.status(OK).json({
+            success: true,
+            status: res.statusCode,
+            message: 'Group was successfully created',
+            data: await Group.findOne({
+                where: { id: group.id },
+                include: Role,
+            }),
+        })
+    } catch (error) {
+        return next({ error })
+    }
+}
 
 
-      res.status(OK).json({
-         success: true,
-         status: res.statusCode,
-         message: "Notification sent to user",
-         data: null
-      })
+module.exports.getRoles = async function (_req, res, next) {
+    try {
+        const roles = await Role.findAll({
+            include: Group,
+        })
 
-   }catch(error){
-      return next({error})
-   }
+        res.status(OK).json({
+            success: true,
+            status: res.statusCode,
+            message: 'Group Details',
+            data: roles,
+        })
+    } catch (error) {
+        return next({ error })
+    }
+}
+
+
+module.exports.getGroups = async function(_req,res,next){
+    try {
+        const groups = await Group.findAll({
+            include: Role,
+        })
+
+        res.status(OK).json({
+            success: true,
+            status: res.statusCode,
+            message: 'Group Details',
+            data: groups,
+        })
+    } catch (error) {
+        return next({ error })
+    }
 }
 
 
