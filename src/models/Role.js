@@ -8,7 +8,6 @@ const roleSchema = {
     name: {
         type: STRING,
         allowNull: false,
-        unique: true,
     },
    type: {
       type: STRING,
@@ -31,29 +30,34 @@ const Role = sequelize.define('Role', roleSchema, {
 })
 
 Role.sync({ alter: true })
-    .then((_) => console.log('Role synced successfully!'))
-    .catch((_) => console.log('Role sync failed'))
+    .then((_) => process.env.NODE_ENV === "production" && console.log("Role synced successfully!"))
+    .catch((_) => process.env.NODE_ENV === "production" && console.log("Role synced failed"))
 
-const roles = [
-    {
-        name: "view customer's information",
-       type: "read",
-        identifier: 'get::v1.customers',
-        description: "Allows users to view customer's information",
-    },
-    {
-        name: "view customer's transactions",
-        type: "read",
-        identifier: 'get::v1.customers.transactions',
-        description: "Allow users to view customer's transactions",
-    },
-]
 
-roles.forEach(async (role) => {
-    await Role.findOrCreate({
-        where: { identifier: role.identifier },
-        defaults: { ...role },
-    })
+// this ensure that the roles are created after the Role model is synced
+Role.addHook("afterSync", function(){
+   const roles = [
+       {
+           name: "view customer's information",
+          type: "read",
+           identifier: 'get::v1.customers',
+           description: "Allows users to view customer's information",
+       },
+       {
+           name: "view customer's transactions",
+           type: "read",
+           identifier: 'get::v1.customers.transactions',
+           description: "Allow users to view customer's transactions",
+       },
+   ]
+
+   roles.forEach(async (role) => {
+       await Role.findOrCreate({
+           where: { identifier: role.identifier },
+           defaults: { ...role },
+       })
+   })
 })
+
 
 module.exports = Role
