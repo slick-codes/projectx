@@ -4,6 +4,9 @@ const User = require("../models/User")
 const Group = require("../models/Group")
 const { OK } = require("http-status-codes")
 const Token = require("../models/Token")
+const { randomUUID } = require("crypto")
+const redis = require("../config/redis")
+const email = require("./../config/email")
 
 
 
@@ -130,6 +133,46 @@ module.exports.generateAccessToken = async function(req, res, next){
 module.exports.createAccount = async function(req, res, next){
    try{
       const schema = new Schema({
+         fullName: { type: "string", required: true},
+         email: { type: "email", required: true},
+         group: { type: "number", required: true}
+      })
+
+      const r = schema.validate(req.body)
+      if(r.error){
+         return next(CustomError.badRequest("Invalid Request Body"))
+      }
+
+      // check if user already exist
+      const user = await User.findOne({where: { email: req.body.email}})
+      if(user){
+         return next(CustomError.unauthorizedRequest("Email already used"))
+      }
+
+        // sending email to user
+        let reference = null
+      // generate uuid
+        while (!reference && await redis.get(reference)) {
+            reference = randomUUID()
+        }
+
+      const url = `${process.env.BASE_URL}/users/complete/${reference}`
+      // save email to redis
+      await redis.set(reference, { ...req.body })
+      await redis.expire(reference, 60 * 30) // set url to expire in 30min
+
+      // send email 
+      email.accountVerification({
+         ...req.body,
+         expiration: "30 minutes"
+      })
+
+
+      res.status(OK).json({
+         success: true,
+         status: res.statusCode,
+         message: "Notification sent to user",
+         data: null
       })
 
    }catch(error){
