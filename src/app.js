@@ -35,6 +35,7 @@ app.use("/static", express.static(path.join(__dirname, "..", "static")))
 
 
 app.use("/api/v1/users", routes.user)
+app.use("/api/v1/staffs", routes.staff)
 
 // error middleware
 app.use(errorMiddleware)
