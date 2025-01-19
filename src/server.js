@@ -7,7 +7,6 @@ const listener = server.listen(PORT, _ => {
     console.error()
     console.error("-------------------------------------")
     console.error(`App is running on port ${PORT}`)
-    console.error("-------------------------------------")
 })
 
 process.on("uncaughtException", error => {
