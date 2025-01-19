@@ -13,6 +13,7 @@ router.post("/login", controllers.login)
 // auth endpoints 
 router.get("/",...all, controllers.getUser)
 router.post("/generate/token",  controllers.generateAccessToken)
+router.post("/create", ...all, controllers.createAccount)
 
 
 
