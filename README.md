@@ -4,6 +4,8 @@ This repository contains the source code for a **Role-Based API** built with mod
 ## Testing
 Use tools like **Postman** or **cURL** to test the API. Ensure the `.env` file is configured correctly for the test environment.
 For detailed API endpoint documentation, visit the [API Documentation](https://documenter.getpostman.com/view/41271356/2sAYQcEA5q).
+## DataBase structure 
+For details about the database structure, please visit this link [Database Structure](https://dbdiagram.io/d/Project-X-troohq-EDR-65b4c1f0ac844320aed55b65)
 
 ## Technologies Used
 - **Node.js** (v16 to v21): Server-side JavaScript runtime.
