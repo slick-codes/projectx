@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { auth } = require("../middlewares/auth")
+const { auth, permitter } = require("../middlewares/auth")
 const controllers = require("./../controllers/user")
 
 
@@ -13,9 +13,10 @@ router.post("/login", controllers.login)
 // auth endpoints 
 router.get("/",...all, controllers.getUser)
 router.post("/generate/token",  controllers.generateAccessToken)
-router.post("/create/group", ...all, controllers.createGroup)
-router.get("/roles", ...all, controllers.getRoles)
-router.get("/groups", ...all, controllers.getGroups)
+router.post("/create/roles", ...[all, permitter([])], controllers.createRole)
+router.get("/permissions", [all, permitter([])] , controllers.getPermission)
+router.get("/roles", ...[all, permitter([])], controllers.getRoles)
+router.post("/roles/attach/permissions", ...[...all, permitter([])], controllers.attachPermissionToRole)
 
 
 
