@@ -2,7 +2,6 @@ const { security } = require('../config/email')
 
 module.exports.accountVerification = async function (data) {
     try {
-       console.log(data)
         security.sendMail({
             from: `TrooHQ ${security.options.auth.user}`,
             to: data.email, 
