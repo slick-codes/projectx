@@ -1,0 +1,33 @@
+[
+   {
+      "name": "Create Roles",
+      "type": "write",
+      "identifier": "post:api.v1.users.create.roles",
+      "description":"Create Groups That Can be Assigned To Staffs"
+   },
+   {
+      "name": "View all permission",
+      "type": "read",
+      "identifier": "get:api.v1.users.permissions",
+      "description": "View all permission associated with the app"
+   },
+   {
+      "name": "Ability to attach permissions to roles",
+      "type": "write",
+      "identifier": "post:api.v1.users.roles.attach.permissions",
+      "description": "This will allow user attach permission to any role of their choice, except the superuser"
+   },
+   {
+      "name": "Create staff",
+      "type": "write",
+      "identifier": "get:api.v1.staffs.create",
+      "description": "Create staff"
+   },
+   {
+      "name": "Get all staff information",
+      "type": "",
+      "identifier": "get:api.v1.staffs",
+      "description": "View all staffs asigned to the app"
+   }
+   
+]
