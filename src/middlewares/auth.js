@@ -34,3 +34,38 @@ module.exports.auth = async function (req, res, next) {
     }
 }
 
+module.exports.permitter = function(supportedRoles = []){
+   return async (req, res, next) => {
+   try{
+
+      const roles = req.group.Roles
+      supportedRoles = [
+         "get:post:patch:delete::all.endpoint",
+         ...supportedRoles
+      ]
+
+      //if()
+      const routes = `${req?.method}:${req.originalUrl.split("/").join(".").slice(1)}`.toLowerCase()
+      supportedRoles.unshift(routes)
+
+      let hasPermission = false
+      for(let role of roles){
+         if(supportedRoles.includes(role.identifier)){
+            hasPermission = true
+            break;
+         }
+      }
+
+      // proceed if the user has necessary access
+      if(hasPermission) return next()
+      return next(CustomError.unauthorizedRequest("You do not have the necessary permission to use this endpoint"))
+
+
+   }catch(error){
+      return next({error})
+   }
+}
+}
+
+
+
