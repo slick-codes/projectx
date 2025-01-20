@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { auth } = require("../middlewares/auth")
+const { auth, permitter } = require("../middlewares/auth")
 const controllers = require("./../controllers/staff")
 
 
@@ -8,8 +8,10 @@ const all = [auth]
 
 
 // auth endpoints 
-router.post("/create", ...all, controllers.createAccount)
-router.get("/", ...all, controllers.getStaffs)
+router.post("/create", [...all, permitter([])], controllers.createAccount)
+router.get("/verify/:reference", controllers.verifyReference)
+router.patch("/setup",   controllers.setupAccount)
+router.get("/",...all, permitter([]),  controllers.getStaffs)
 
 
 
