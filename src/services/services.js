@@ -1,27 +1,27 @@
 
-const Group = require('../models/Group')
 const Role = require('../models/Role')
+const Permission = require('../models/Permission')
 
-// This function generates the group and roles for userpadmin when server starts
+// This function generates the role and roles for userpadmin when server starts
 module.exports.generateSuperAdminGroupAndRole = async function () {
-    let group = await Group.findOne({ where: { name: 'superadmin' } })
-    let role = await Role.findOne({ where: { name: 'all' } })
+    let role = await Role.findOne({ where: { name: 'superadmin' } })
+    let permission = await Permission.findOne({ where: { name: 'all' } })
 
-    if (!group) {
-        group = await Group.create({
+    if (!role) {
+        role = await Role.create({
             name: 'superadmin',
-            description: 'Super admin group',
+            description: 'Super admin role',
         })
+       if (!permission) {
+          permission = await Permission.create({
+             name: 'all',
+             type: "read:write",
+             description: 'This role allows users to have access to all the available features',
+             identifier: 'get:post:patch:delete::all.endpoint',
+          })
 
-        if (!role) {
-            role = await Role.create({
-                name: 'all',
-               type: "read:write",
-                description: 'This role allows users to have access to all the available features',
-                identifier: 'get:post:patch:delete::all.endpoint',
-            })
-
-            await group.addRoles([role])
-        }
+          await role.addPermission([permission])
+       }
     }
+
 }
