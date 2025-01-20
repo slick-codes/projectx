@@ -1,7 +1,7 @@
 
 const { DataTypes } = require('sequelize')
 const { sequelize } = require('./../config/db')
-const permissions = require("./../services/roles.json")
+const permissions = require("./../services/permissions.json")
 
 const { STRING } = DataTypes
 
