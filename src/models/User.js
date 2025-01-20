@@ -10,7 +10,7 @@ const adminSchema = {
         type: STRING,
         allowNull: false,
     },
-    group: {
+    role: {
         type: INTEGER,
         allowNull: false,
     },
