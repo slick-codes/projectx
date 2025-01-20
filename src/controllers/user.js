@@ -1,10 +1,10 @@
 const { Schema } = require("json-validace")
 const CustomError = require("../helpers/error")
 const User = require("../models/User")
-const Group = require("../models/Group")
+const Role = require("../models/Role")
 const { OK } = require("http-status-codes")
 const Token = require("../models/Token")
-const Role = require("../models/Role")
+const Permission = require("../models/Permission")
 
 
 
@@ -15,6 +15,7 @@ module.exports.createSuperAdmin = async function(req, res, next){
          email: { type: "email", required: true},
          password: { type: "string", required: true, match: /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/}
       })
+      {}
 
       const r = schema.validate(req.body)
       if(r.error){
@@ -27,11 +28,11 @@ module.exports.createSuperAdmin = async function(req, res, next){
          return next(CustomError.unauthorizedRequest("there is already a superadmin"))
       }
 
-      const group = await Group.findOne({where: { name: "superadmin"}})
+      const role = await Role.findOne({where: { name: "superadmin"}})
 
       const user = new User({
          ...req.body,
-         group: group.id
+         role: role.id
       })
 
       await user.encrypt("password")
@@ -48,7 +49,6 @@ module.exports.createSuperAdmin = async function(req, res, next){
       return next({error})
    }
 }
-
 
 module.exports.login = async function(req,res,next){
    try{
@@ -84,7 +84,6 @@ module.exports.login = async function(req,res,next){
    }
 }
 
-
 module.exports.getUser = async function(req,res,next){
    try{
       res.status(OK).json({
@@ -93,14 +92,13 @@ module.exports.getUser = async function(req,res,next){
          message: "User's info fetched successfully",
          data: {
                 ...req.user.dataValues,
-                group: req.group || {},
+                role: req.role|| {},
          },
       })
    }catch(error){
       return next({error})
    }
 }
-
 
 module.exports.generateAccessToken = async function(req, res, next){
     try {
@@ -127,13 +125,12 @@ module.exports.generateAccessToken = async function(req, res, next){
     }
 }
 
-
-module.exports.createGroup = async function (req, res, next) {
+module.exports.createRole = async function (req, res, next) {
     try {
         const schema = new Schema({
             name: { type: 'string', required: true },
             description: { type: 'string', required: true },
-            roles: { type: 'array', required: true },
+            permissions: { type: 'array', required: true },
         })
 
         const result = schema.validate(req.body)
@@ -144,26 +141,28 @@ module.exports.createGroup = async function (req, res, next) {
         const body = result.data
         console.log(body)
 
-        if (await Group.findOne({ where: { name: body.name } })) {
-            return next(CustomError.badRequest('Group with that id already exist!'))
+        if (await Role.findOne({ where: { name: body.name } })) {
+            return next(CustomError.badRequest('Role with that name already exist!'))
         }
 
-        const group = await Group.create({
+        const role = await Role.create({
             description: body.description,
             name: body.name,
         })
 
-        if (body.roles.length > 0) {
-            await group.addRoles(body.roles)
+        if (body.permissions.length > 0) {
+           try{
+              await role.addPermission(body.permissions)
+           }catch(error){}
         }
 
         res.status(OK).json({
             success: true,
             status: res.statusCode,
-            message: 'Group was successfully created',
-            data: await Group.findOne({
-                where: { id: group.id },
-                include: Role,
+            message: 'Role was successfully created',
+            data: await Role.findOne({
+                where: { id: role.id },
+                include: Permission,
             }),
         })
     } catch (error) {
@@ -171,17 +170,33 @@ module.exports.createGroup = async function (req, res, next) {
     }
 }
 
-
-module.exports.getRoles = async function (_req, res, next) {
+module.exports.getPermission = async function (_req, res, next) {
     try {
-        const roles = await Role.findAll({
-            include: Group,
+        const permissions = await Permission.findAll({
+            include: Role,
         })
 
         res.status(OK).json({
             success: true,
             status: res.statusCode,
-            message: 'Group Details',
+            message: 'Permission fetched successfully',
+            data: permissions,
+        })
+    } catch (error) {
+        return next({ error })
+    }
+}
+
+module.exports.getRoles = async function(_req,res,next){
+    try {
+        const roles = await Role.findAll({
+            include: Permission,
+        })
+
+        res.status(OK).json({
+            success: true,
+            status: res.statusCode,
+            message: 'Roles fetched successfully',
             data: roles,
         })
     } catch (error) {
@@ -190,22 +205,61 @@ module.exports.getRoles = async function (_req, res, next) {
 }
 
 
-module.exports.getGroups = async function(_req,res,next){
+module.exports.attachPermissionToRole = async function (req, res, next) {
     try {
-        const groups = await Group.findAll({
-            include: Role,
+        const schema = new Schema({
+            permissions: { type: 'array', required: true },
+            role: { type: 'number', required: true },
         })
+
+        const result = schema.validate(req.body)
+        if (result.error) {
+            return next(CustomError.badRequest('Invalid request body', result.error))
+        }
+
+        const body = result.data
+        if (!body.permissions.length) {
+            return next(CustomError.badRequest('At least one permission should be provided'))
+        }
+        const role = await Role.findByPk(body.role)
+
+        if (!role) {
+            return next(CustomError.badRequest('Role does not exist!'))
+        }
+
+        const permissions = await Promise.all(
+            body.permissions.map(async (n) => {
+                const permission = await Permission.findByPk(n)
+                if (!permission) {
+                    return CustomError.badRequest(`${n} is not valid Permission ID`)
+                }
+                return permission.id
+            })
+        )
+
+        for (let r of permissions ) {
+            if (r instanceof CustomError) {
+                return next(r)
+            }
+        }
+
+        /// attach roles to group
+        await role.addPermission(permissions)
 
         res.status(OK).json({
             success: true,
             status: res.statusCode,
-            message: 'Group Details',
-            data: groups,
+            message: 'Permissions where successfully attached to the Role',
+            data: await Role.findOne({
+                where: { id: role.id },
+                include: Permission,
+            }),
         })
     } catch (error) {
         return next({ error })
     }
 }
+
 
 
 
